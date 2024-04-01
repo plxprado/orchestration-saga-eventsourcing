@@ -1,5 +1,5 @@
 package com.prado.tools.toolkitdev.eventsourcing.domain.vo;
 
-public enum CommandType {
+public enum StepCommandBusiness {
     REGISTER, CALCULATE, CHARGE
 }

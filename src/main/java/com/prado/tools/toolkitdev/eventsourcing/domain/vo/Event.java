@@ -26,5 +26,6 @@ public class Event implements java.io.Serializable {
 
     private BigDecimal transactionAmount;
 
-    private CommandBusinessContext commandBusinessContext;
+    private String sagaName;
+
 }

@@ -9,7 +9,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommandBusinessContext {
+public class SagaWorkflowItem {
+
     private Long id;
-    private String name;
+    private StepCommandBusiness stepCommandBusiness;
+    private Long stepOrder;
+    private Boolean finalizer;
+    private SagaWorkflow sagaWorkflow;
+
 }

@@ -1,8 +1,8 @@
 package com.prado.tools.toolkitdev.eventsourcing.persistence.entity;
 
 import com.prado.tools.toolkitdev.eventsourcing.domain.vo.EventTransactionContext;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatus;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.TransactionJson;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatusEnum;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.objectstream.EventStreamObject;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,20 +19,18 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Entity
-@Table(name = "saga_event_stream")
+@Table(name = "event_stream")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Builder
-public class SagaEventStreamEntity {
+public class EventStreamEntity {
 
     @Id
     @GeneratedValue(
@@ -47,8 +45,8 @@ public class SagaEventStreamEntity {
 
 
     @ManyToOne
-    @JoinColumn(name = "saga_item_id")
-    private SagaRoudmapItemEntity roudmapItem;
+    @JoinColumn(name = "workflow_item_id")
+    private SagaWorkflowItemEntity workflowItem;
 
 
     @Column(name = "aggregation_id", nullable = false)
@@ -62,22 +60,23 @@ public class SagaEventStreamEntity {
 
     @Column(name = "transaction_json")
     @JdbcTypeCode(SqlTypes.JSON)
-    private TransactionJson transactionJson;
+    private EventStreamObject eventStreamObject;
 
     @ManyToOne
     @JoinColumn(name = "process_status_id")
-    private ProcessSagaStatusEntity progressSagaStatus;
+    private ProcessStatusEntity progressSagaStatus;
 
-    public Long orderItem() {
-        return this.roudmapItem.getStepOrder();
-    }
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+
 
     public EventTransactionContext toTransactionContext() {
         return EventTransactionContext.builder()
                 .aggregationId(this.aggregationId)
-                .processCommandStatus(ProcessCommandStatus.valueOf(this.progressSagaStatus.getName()))
-                .sagaRoudmapItem(this.roudmapItem.toVO())
-                .transactionJson(this.transactionJson)
+                .processCommandStatusEnum(ProcessCommandStatusEnum.valueOf(this.progressSagaStatus.getName()))
+                .sagaWorkflowItem(this.workflowItem.toVO())
+                .eventStreamObject(this.eventStreamObject)
                 .build();
     }
 }

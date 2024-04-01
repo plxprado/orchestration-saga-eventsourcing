@@ -1,35 +1,34 @@
 package com.prado.tools.toolkitdev.eventsourcing.domain.service;
 
-import com.prado.tools.toolkitdev.eventsourcing.domain.dto.CommandBusinessContextRequest;
 import com.prado.tools.toolkitdev.eventsourcing.domain.dto.EventRequest;
 import com.prado.tools.toolkitdev.eventsourcing.domain.factory.SagaCommandTransactionFactory;
-import com.prado.tools.toolkitdev.eventsourcing.domain.ports.stream.EventStreamAppenderPort;
 import com.prado.tools.toolkitdev.eventsourcing.domain.ports.OrchestraionManagerPort;
 import com.prado.tools.toolkitdev.eventsourcing.domain.ports.persistence.SagaPersistencePort;
 import com.prado.tools.toolkitdev.eventsourcing.domain.ports.projection.SagaProjectionDataPort;
+import com.prado.tools.toolkitdev.eventsourcing.domain.ports.stream.EventStreamAppenderPort;
 import com.prado.tools.toolkitdev.eventsourcing.domain.service.aggregation.AggregationManager;
 import com.prado.tools.toolkitdev.eventsourcing.domain.service.commands.CommandTransaction;
 import com.prado.tools.toolkitdev.eventsourcing.domain.service.orchestration.OrquestrationEventBusNotifier;
 import com.prado.tools.toolkitdev.eventsourcing.domain.vo.AggregationController;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.CommandType;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.Event;
 import com.prado.tools.toolkitdev.eventsourcing.domain.vo.EventTransactionContext;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatus;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmap;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapItem;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapIterator;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatusEnum;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflow;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowItem;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowIterator;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.objectstream.EventContentStreamObject;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.objectstream.EventStreamObject;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.UUID;
 
-import static com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatus.COMPLETED;
+import static com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatusEnum.COMPLETED;
 
 @Service
 public class TransctionOrchestrationManager implements OrchestraionManagerPort {
 
     private SagaPersistencePort sagaPersistencePort;
-
     private SagaProjectionDataPort sagaProjectionDataPort;
     private AggregationManager  aggregationManager;
     private SagaCommandTransactionFactory sagaCommandTransactionFactory;
@@ -37,37 +36,57 @@ public class TransctionOrchestrationManager implements OrchestraionManagerPort {
 
     private OrquestrationEventBusNotifier orquestrationEventBusNotifier;
 
-    public TransctionOrchestrationManager(final SagaPersistencePort sagaPersistencePort,
-                                          final SagaCommandTransactionFactory sagaCommandTransactionFactory,
-                                          final AggregationManager aggregationManager,
-                                          final OrquestrationEventBusNotifier orquestrationEventBusNotifier) {
-
-        this.aggregationManager = aggregationManager;
+    public TransctionOrchestrationManager(SagaPersistencePort sagaPersistencePort,
+                                          SagaProjectionDataPort sagaProjectionDataPort,
+                                          AggregationManager aggregationManager,
+                                          SagaCommandTransactionFactory sagaCommandTransactionFactory,
+                                          EventStreamAppenderPort eventStreamAppenderPort,
+                                          OrquestrationEventBusNotifier orquestrationEventBusNotifier) {
         this.sagaPersistencePort = sagaPersistencePort;
+        this.sagaProjectionDataPort = sagaProjectionDataPort;
+        this.aggregationManager = aggregationManager;
         this.sagaCommandTransactionFactory = sagaCommandTransactionFactory;
-
+        this.eventStreamAppenderPort = eventStreamAppenderPort;
+        this.orquestrationEventBusNotifier = orquestrationEventBusNotifier;
     }
 
     public EventTransactionContext initSagaTransaction(final EventRequest eventRequest) {
 
         AggregationController aggregationController = this.aggregationManager.createAgregationToSaga(eventRequest.toVo());
 
-        final SagaRoudmap sagaRoudmap = sagaPersistencePort
-                .searchRoudmapByCommandBusinessContext(CommandBusinessContextRequest.builder()
-                        .commandName(eventRequest.commandBusiness())
-                        .build());
 
-        final SagaRoudmapItem initCommandSaga = sagaRoudmap.getSagaRoudmapItemList().stream()
-                .min(Comparator.comparing(SagaRoudmapItem::getStepOrder))
+        final SagaWorkflow sagaWorkflow = sagaPersistencePort
+                .searchSagaWorkflowByName(eventRequest.sagaWorfklowName());
+
+        final SagaWorkflowItem initCommandSaga = sagaWorkflow.getSagaWorkflowItemList().stream()
+                .min(Comparator.comparing(SagaWorkflowItem::getStepOrder))
                 .orElseThrow(() -> new RuntimeException("No step found"));
 
         final CommandTransaction commandTransaction = this.sagaCommandTransactionFactory
-                .getCommandTransaction(CommandType.valueOf(initCommandSaga.getStepName().toUpperCase()));
+                .getCommandTransaction(initCommandSaga.getStepCommandBusiness());
+
+
+
+        final EventStreamObject payload = EventStreamObject.builder()
+                .aggregationId(aggregationController.getId())
+                .transactionExecutionDate(LocalDateTime.now())
+                .sagaName(eventRequest.sagaWorfklowName())
+                .status(ProcessCommandStatusEnum.PENDING.name())
+                .eventContentStreamObject(EventContentStreamObject.builder()
+                        .transactionValue(eventRequest.transactionValue())
+                        .transactionDate(eventRequest.transactionDate())
+                        .externalTransactionId(eventRequest.transactionId())
+                        .transactionType(eventRequest.sagaWorfklowName())
+                        .build())
+
+                .build();
 
         final EventTransactionContext eventTransactionContext = EventTransactionContext.builder()
                 .aggregationId(aggregationController.getId())
-                .processCommandStatus(ProcessCommandStatus.PENDING)
-                .sagaRoudmapItem(initCommandSaga)
+                .externalTransactionId(eventRequest.transactionId())
+                .processCommandStatusEnum(ProcessCommandStatusEnum.PENDING)
+                .sagaWorkflowItem(initCommandSaga)
+                .eventStreamObject(payload)
                 .build();
 
         this.eventStreamAppenderPort.appendToEventStream(eventTransactionContext);
@@ -81,39 +100,35 @@ public class TransctionOrchestrationManager implements OrchestraionManagerPort {
         final EventTransactionContext eventTransactionContext = this.sagaProjectionDataPort.replayToCurrentState(aggregationId);
 
         if(isSagaFinished(eventTransactionContext)){
+            eventStreamAppenderPort.appendToEventStream(eventTransactionContext.updateSagaProcessStatus(ProcessCommandStatusEnum.SAGA_COMPLETED_FINISHED));
             orquestrationEventBusNotifier.notifyEventBusSagaFinished(eventTransactionContext);
             return eventTransactionContext;
         }
 
-        final SagaRoudmapItem nextItem = getNextItem(eventTransactionContext);
+        final SagaWorkflowItem nextItem = getNextItem(eventTransactionContext);
 
 
+        final EventTransactionContext newContext = eventTransactionContext.updateSagaProcessStatus(
+                ProcessCommandStatusEnum.PENDING, nextItem);
 
-        final EventTransactionContext newContext =  EventTransactionContext.builder()
-                .aggregationId(eventTransactionContext.getAggregationId())
-                .processCommandStatus(ProcessCommandStatus.PENDING)
-                .sagaRoudmapItem(nextItem)
-                .build();
+        this.eventStreamAppenderPort.appendToEventStream(newContext);
 
-        this.eventStreamAppenderPort.appendToEventStream(eventTransactionContext);
-
-        CommandType command = CommandType.valueOf(nextItem.getStepName().toUpperCase());
-        CommandTransaction commandTransaction = this.sagaCommandTransactionFactory
-                .getCommandTransaction(command);
+        final CommandTransaction commandTransaction = this.sagaCommandTransactionFactory
+                .getCommandTransaction(nextItem.getStepCommandBusiness());
 
         return commandTransaction.executeCommand(newContext);
     }
 
     private boolean isSagaFinished(EventTransactionContext eventTransactionContext) {
-        return (COMPLETED.equals(eventTransactionContext.getProcessCommandStatus())
-            && eventTransactionContext.getSagaRoudmapItem().getFinalizer());
+        return (COMPLETED.equals(eventTransactionContext.getProcessCommandStatusEnum())
+            && eventTransactionContext.getSagaWorkflowItem().getFinalizer());
 
     }
 
-    private SagaRoudmapItem getNextItem(EventTransactionContext eventTransactionContext) {
-        final Long sagaRoudmapId = eventTransactionContext.getSagaRoudmapItem().getSagaRoudmap().getId();
-        SagaRoudmapIterator itemIterator = sagaPersistencePort.searchRoudmapIteratorById(sagaRoudmapId);
-        return itemIterator.findNextItem(eventTransactionContext.getSagaRoudmapItem());
+    private SagaWorkflowItem getNextItem(EventTransactionContext eventTransactionContext) {
+        final Long sagaRoudmapId = eventTransactionContext.getSagaWorkflowItem().getSagaWorkflow().getId();
+        SagaWorkflowIterator itemIterator = sagaPersistencePort.searchRoudmapIteratorById(sagaRoudmapId);
+        return itemIterator.findNextItem(eventTransactionContext.getSagaWorkflowItem());
     }
 
 

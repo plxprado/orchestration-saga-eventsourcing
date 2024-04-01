@@ -1,8 +1,11 @@
 package com.prado.tools.toolkitdev.eventsourcing.persistence.entity;
 
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapItem;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowItem;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.StepCommandBusiness;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,8 +25,8 @@ import org.springframework.cache.annotation.Cacheable;
 @Builder
 @Cacheable
 @Entity
-@Table(name = "saga_roudmap_item")
-public class SagaRoudmapItemEntity {
+@Table(name = "saga_workflow_item")
+public class SagaWorkflowItemEntity {
 
 
     @Id
@@ -38,21 +41,22 @@ public class SagaRoudmapItemEntity {
     private Long stepOrder;
 
     @Column(name = "step_name", nullable = false)
-    private String stepName;
+    @Enumerated(EnumType.STRING)
+    private StepCommandBusiness stepCommandBusiness;
 
     @Column(name = "finalizer")
     private Boolean finalizer;
 
     @ManyToOne
-    @JoinColumn(name="saga_roudmap_id")
-    private SagaRoudmapEntity sagaRoudmap;
+    @JoinColumn(name="saga_workflow_id")
+    private SagaWorkflowEntity sagaRoudmap;
 
-    public SagaRoudmapItem toVO() {
-        return SagaRoudmapItem.builder()
+    public SagaWorkflowItem toVO() {
+        return SagaWorkflowItem.builder()
                 .id(this.id)
-                .sagaRoudmap(this.sagaRoudmap.toVO())
+                .sagaWorkflow(this.sagaRoudmap.toVO())
                 .stepOrder(this.stepOrder)
-                .stepName(this.stepName)
+                .stepCommandBusiness(this.stepCommandBusiness)
                 .finalizer(this.finalizer)
                 .build();
     }

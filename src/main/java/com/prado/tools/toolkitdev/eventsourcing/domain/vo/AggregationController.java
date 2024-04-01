@@ -17,10 +17,9 @@ public class AggregationController {
 
     private UUID id;
     private UUID transactionId;
-    private String commandAction;
     private Long version;
     private String name;
     private LocalDateTime creationDate;
-
+    private SagaWorkflow sagaWorkflow;
 }
 

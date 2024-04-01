@@ -7,13 +7,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 
-public class SagaRoudmapIterator implements Iterator<SagaRoudmapItem> {
+public class SagaWorkflowIterator implements Iterator<SagaWorkflowItem> {
 
-    private List<SagaRoudmapItem> sagaRoudmapItems;
+    private List<SagaWorkflowItem> sagaWorkflowItems;
     private int currentIndex;
 
-    public SagaRoudmapIterator(List<SagaRoudmapItem> sagaRoudmapItems) {
-        this.sagaRoudmapItems = sagaRoudmapItems;
+    public SagaWorkflowIterator(List<SagaWorkflowItem> sagaWorkflowItems) {
+        this.sagaWorkflowItems = sagaWorkflowItems;
         this.currentIndex = 0;
     }
 
@@ -22,8 +22,8 @@ public class SagaRoudmapIterator implements Iterator<SagaRoudmapItem> {
 
     @Override
     public boolean hasNext() {
-        while (currentIndex < sagaRoudmapItems.size()) {
-            SagaRoudmapItem currentItem = sagaRoudmapItems.get(currentIndex);
+        while (currentIndex < sagaWorkflowItems.size()) {
+            SagaWorkflowItem currentItem = sagaWorkflowItems.get(currentIndex);
             if (Optional.ofNullable(currentItem).isPresent()) {
                 return true;
             }
@@ -33,11 +33,11 @@ public class SagaRoudmapIterator implements Iterator<SagaRoudmapItem> {
     }
 
     @Override
-    public SagaRoudmapItem next() {
+    public SagaWorkflowItem next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        return sagaRoudmapItems.get(currentIndex++);    }
+        return sagaWorkflowItems.get(currentIndex++);    }
 
     @Override
     public void remove() {
@@ -45,14 +45,14 @@ public class SagaRoudmapIterator implements Iterator<SagaRoudmapItem> {
     }
 
     @Override
-    public void forEachRemaining(Consumer<? super SagaRoudmapItem> action) {
+    public void forEachRemaining(Consumer<? super SagaWorkflowItem> action) {
         Iterator.super.forEachRemaining(action);
     }
 
-    public SagaRoudmapItem findNextItem(SagaRoudmapItem sagaRoudmapItem) {
+    public SagaWorkflowItem findNextItem(SagaWorkflowItem sagaWorkflowItem) {
         while (this.hasNext()) {
-            SagaRoudmapItem item = this.next();
-            if (sagaRoudmapItem.getId().equals(item.getId())) {
+            SagaWorkflowItem item = this.next();
+            if (sagaWorkflowItem.getId().equals(item.getId())) {
                 return this.next();
             }
         }

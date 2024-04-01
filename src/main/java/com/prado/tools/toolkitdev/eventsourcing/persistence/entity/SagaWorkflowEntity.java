@@ -1,7 +1,6 @@
 package com.prado.tools.toolkitdev.eventsourcing.persistence.entity;
 
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmap;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapItem;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflow;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,8 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -34,8 +31,8 @@ import java.util.Optional;
 @Builder
 @Cacheable
 @Entity
-@Table(name = "saga_roudmap")
-public class SagaRoudmapEntity {
+@Table(name = "saga_workflow")
+public class SagaWorkflowEntity {
 
     @Id
     @GeneratedValue(
@@ -45,35 +42,34 @@ public class SagaRoudmapEntity {
     @SequenceGenerator(name = "sq_saga_saga_roudmap_id", allocationSize = 1)
     private Long id;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @Column(name = "creation_date", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime creationDate;
 
-    @ManyToOne
-    @JoinColumn(name = "command_id")
-    private CommandBusinessContextEntity commandBusinessContext;
-
     @OneToMany(mappedBy="sagaRoudmap", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<SagaRoudmapItemEntity> items;
+    private List<SagaWorkflowItemEntity> items;
 
-    public SagaRoudmap toVO() {
-        return SagaRoudmap.builder()
+    public SagaWorkflow toVO() {
+        return SagaWorkflow.builder()
                 .id(this.id)
+                .name(this.name)
                 .creationDate(this.creationDate)
-                .commandBusinessContext(this.commandBusinessContext.toVO())
-                .sagaRoudmapItemList(Collections.emptyList())
+                .sagaWorkflowItemList(Collections.emptyList())
                 .build();
     }
 
 
-    public SagaRoudmap toVOWithList() {
-        return SagaRoudmap.builder()
+    public SagaWorkflow toVOWithItems() {
+        return SagaWorkflow.builder()
                 .id(this.id)
+                .name(this.name)
                 .creationDate(this.creationDate)
-                .commandBusinessContext(this.commandBusinessContext.toVO())
-                .sagaRoudmapItemList(Optional.ofNullable(this.items)
+                .sagaWorkflowItemList(Optional.ofNullable(this.items)
                         .map(items -> items.stream()
-                                .map(SagaRoudmapItemEntity::toVO)
+                                .map(SagaWorkflowItemEntity::toVO)
                                 .toList())
                         .orElse(Collections.emptyList()))
                 .build();

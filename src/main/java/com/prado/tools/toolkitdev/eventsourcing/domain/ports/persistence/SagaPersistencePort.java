@@ -1,12 +1,11 @@
 package com.prado.tools.toolkitdev.eventsourcing.domain.ports.persistence;
 
-import com.prado.tools.toolkitdev.eventsourcing.domain.dto.CommandBusinessContextRequest;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.AggregationController;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.CommandBusinessContext;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatus;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatusEnum;
 import com.prado.tools.toolkitdev.eventsourcing.domain.vo.Event;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmap;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapItem;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapIterator;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflow;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowItem;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowIterator;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,25 +13,22 @@ import java.util.UUID;
 public interface SagaPersistencePort {
 
 
-    SagaRoudmap createSagaRoudmap(SagaRoudmap sagaRoudmapRequest);
+    SagaWorkflow createSagaWorkflow(SagaWorkflow sagaWorkflowRequest);
 
-    List<SagaRoudmap> allSagas();
+    List<SagaWorkflow> allSagas();
 
-    SagaRoudmap searchRoudmapByCommandBusinessContext(CommandBusinessContextRequest commandBusinessContext);
+    SagaWorkflow searchSagaWorkflowByName(String sagaWorkflowName);
 
-    SagaRoudmap sagaRoudmapById(Long id);
+    SagaWorkflow sagaRoudmapById(Long id);
 
-    SagaRoudmapIterator searchRoudmapIteratorById(final Long id);
-    SagaRoudmapItem createSagaRoudmapItem(SagaRoudmapItem sagaRoudmapItemRequest);
+    SagaWorkflowIterator searchRoudmapIteratorById(final Long id);
+    SagaWorkflowItem createSagaWorkflowItem(SagaWorkflowItem sagaWorkflowItemRequest);
 
-    SagaRoudmapItem findSagaRoudmapItemById(Long id);
-    AggregationController createEventAgregration(Event event);
-
-    CommandBusinessContext searchByName(String name);
-
-    SagaRoudmapIterator searchRoudmapByCommand(CommandBusinessContext commandBusinessContext);
-
-    CommandBusinessContext createCommandBusinessContext(CommandBusinessContextRequest roudmapRequest);
+    SagaWorkflowItem findSagaRoudmapItemById(Long id);
 
     Event loadEventByAggregationId(UUID aggregationId);
+
+    ProcessCommandStatus createProcessStatus(ProcessCommandStatusEnum processCommandStatusEnum);
+
+    List<ProcessCommandStatus> geallSagaWorkflowStatus();
 }

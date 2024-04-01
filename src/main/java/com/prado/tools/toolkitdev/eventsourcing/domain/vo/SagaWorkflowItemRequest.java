@@ -7,11 +7,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import static com.prado.tools.toolkitdev.eventsourcing.domain.vo.StepCommandBusiness.valueOf;
+
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SagaRoudmapItemRequest {
+public class SagaWorkflowItemRequest {
 
     @JsonIgnore
     private Long sagaRoudmapId;
@@ -25,11 +27,11 @@ public class SagaRoudmapItemRequest {
     @JsonProperty("finalizer")
     private Boolean finalizer;
 
-    public SagaRoudmapItem toVo(){
-        return SagaRoudmapItem.builder()
-                .sagaRoudmap(SagaRoudmap.builder().id(sagaRoudmapId).build())
+    public SagaWorkflowItem toVo() {
+        return SagaWorkflowItem.builder()
+                .sagaWorkflow(SagaWorkflow.builder().id(sagaRoudmapId).build())
                 .stepOrder(stepOrder)
-                .stepName(stepName)
+                .stepCommandBusiness(valueOf(stepName))
                 .finalizer(finalizer)
                 .build();
     }

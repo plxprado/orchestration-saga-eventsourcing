@@ -2,7 +2,7 @@ package com.prado.tools.toolkitdev.eventsourcing.domain.service.projection;
 
 import com.prado.tools.toolkitdev.eventsourcing.domain.ports.projection.SagaProjectionDataPort;
 import com.prado.tools.toolkitdev.eventsourcing.domain.vo.EventTransactionContext;
-import com.prado.tools.toolkitdev.eventsourcing.persistence.entity.SagaEventStreamEntity;
+import com.prado.tools.toolkitdev.eventsourcing.persistence.entity.EventStreamEntity;
 import com.prado.tools.toolkitdev.eventsourcing.persistence.repository.SagaEventStreamRepository;
 import org.springframework.stereotype.Service;
 
@@ -24,9 +24,11 @@ public class SagaProjectionDataPortImpl implements SagaProjectionDataPort {
     }
     @Override
     public EventTransactionContext replayToCurrentState(UUID aggregationId) {
-        return this.eventStreamRepository.findByAggregationId(aggregationId).stream()
-                .max(Comparator.comparing(SagaEventStreamEntity::orderItem)).
-                 map(SagaEventStreamEntity::toTransactionContext).orElseThrow(() -> new RuntimeException("No event stream found"));
 
+        // TODO SAGA VERSION TO CONTROL FLOW
+        return this.eventStreamRepository.findByAggregationId(aggregationId).stream()
+                .max(Comparator.comparing(EventStreamEntity::getVersion))
+                .map(EventStreamEntity::toTransactionContext)
+                .orElseThrow(() -> new RuntimeException("No events found for aggregationId: " + aggregationId));
     }
 }

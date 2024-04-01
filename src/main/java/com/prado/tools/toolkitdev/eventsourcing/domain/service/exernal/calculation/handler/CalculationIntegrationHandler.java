@@ -6,11 +6,14 @@ import com.prado.tools.toolkitdev.eventsourcing.domain.ports.stream.EventStreamA
 import com.prado.tools.toolkitdev.eventsourcing.domain.service.exernal.calculation.EventCalculationDTO;
 import com.prado.tools.toolkitdev.eventsourcing.domain.service.exernal.calculation.ResponseCalculation;
 import com.prado.tools.toolkitdev.eventsourcing.domain.vo.EventTransactionContext;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatus;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.TransactionJson;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatusEnum;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.objectstream.CalculationStreamObject;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.objectstream.EventStreamObject;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 @Component
 public class CalculationIntegrationHandler {
@@ -34,17 +37,25 @@ public class CalculationIntegrationHandler {
         // TODO momento de carregar replay e como gerenciar os itens em exeucção
         EventTransactionContext currenteTransactionContext = this.sagaProjectionDataPort.replayToCurrentState(fromMicroservices.getAggregationId());
         ResponseCalculation responseCalculation = fromMicroservices.getResponseCalculation();
-        final EventTransactionContext eventTransactionContext = EventTransactionContext.builder()
-                .transactionJson(TransactionJson.builder()
-                        .status(responseCalculation.getCalculationStatus())
-                        .transactionExecutionDate(responseCalculation.getCalculationDate())
+
+        final EventStreamObject eventStreamObject = EventStreamObject.builder()
+                .sagaName(currenteTransactionContext.getSagaWorkflowItem().getSagaWorkflow().getName())
+                .aggregationId(fromMicroservices.getAggregationId())
+                .status("COMPLETED")
+                .transactionExecutionDate(LocalDateTime.now())
+                .calculationStreamObject(CalculationStreamObject.builder()
                         .transactionValueCalculated(responseCalculation.getCalculationResult())
                         .build())
-                .sagaRoudmapItem(currenteTransactionContext.getSagaRoudmapItem())
-                .processCommandStatus(ProcessCommandStatus.COMPLETED)
+                .build();
+
+        final EventTransactionContext eventTransactionContext = EventTransactionContext.builder()
+                .eventStreamObject(eventStreamObject)
+                .sagaWorkflowItem(currenteTransactionContext.getSagaWorkflowItem())
+                .processCommandStatusEnum(ProcessCommandStatusEnum.COMPLETED)
                 .aggregationId(fromMicroservices.getAggregationId())
                 .build();
         this.eventStreamAppenderPort.appendToEventStream(eventTransactionContext);
+
         this.orchestraionManagerPort.executeNextBusinessCommand(eventTransactionContext.getAggregationId());
 
     }

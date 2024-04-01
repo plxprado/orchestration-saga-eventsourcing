@@ -21,6 +21,6 @@ public class OrquestrationEventBusNotifierImpl implements OrquestrationEventBusN
 
     @Override
     public void notifyEventBusSagaFinished(EventTransactionContext eventTransactionContext) {
-        System.out.println("Event Transaction Context: " + eventTransactionContext.toString());
+        System.out.println("Event Transaction Context: [FINISHED]" + eventTransactionContext.toString());
     }
 }

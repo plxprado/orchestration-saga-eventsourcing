@@ -8,19 +8,19 @@ import java.util.List;
 
 @Getter
 @Builder
-public class SagaRoudmap {
+public class SagaWorkflow {
 
     private Long id;
-    private CommandBusinessContext commandBusinessContext;
+    private String name;
     private LocalDateTime creationDate;
-    private List<SagaRoudmapItem> sagaRoudmapItemList;
+    private List<SagaWorkflowItem> sagaWorkflowItemList;
 
-    public SagaRoudmap toVo(){
-        return SagaRoudmap.builder()
+    public SagaWorkflow toVo(){
+        return SagaWorkflow.builder()
                 .id(id)
-                .commandBusinessContext(commandBusinessContext)
+                .name(name)
                 .creationDate(LocalDateTime.now())
-                .sagaRoudmapItemList(sagaRoudmapItemList)
+                .sagaWorkflowItemList(sagaWorkflowItemList)
                 .build();
     }
 

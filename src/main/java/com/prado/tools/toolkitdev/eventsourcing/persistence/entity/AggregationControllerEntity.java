@@ -45,15 +45,21 @@ public class AggregationControllerEntity {
     private LocalDateTime creationDate;
 
     @ManyToOne
-    @JoinColumn(name = "command_id")
-    private CommandBusinessContextEntity commandBusinessContext;
+    @JoinColumn(name = "saga_workflow_id")
+    private SagaWorkflowEntity sagaWorkflow;
 
     @Column(name = "version", nullable = false)
     private Long version;
 
 
     public AggregationController toVO() {
-        return null;
+        return AggregationController.builder()
+                .id(id)
+                .transactionId(transactionId)
+                .creationDate(creationDate)
+                .sagaWorkflow(sagaWorkflow.toVO())
+                .version(version)
+                .build();
 
     }
 }

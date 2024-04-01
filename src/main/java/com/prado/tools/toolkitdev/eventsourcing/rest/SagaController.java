@@ -1,13 +1,15 @@
 package com.prado.tools.toolkitdev.eventsourcing.rest;
 
-import com.prado.tools.toolkitdev.eventsourcing.domain.dto.CommandBusinessContextRequest;
-import com.prado.tools.toolkitdev.eventsourcing.domain.dto.SagaRoudmapRequest;
+import com.prado.tools.toolkitdev.eventsourcing.domain.dto.ProcessCommandStatusRequest;
+import com.prado.tools.toolkitdev.eventsourcing.domain.dto.SagaWorkflowRequest;
 import com.prado.tools.toolkitdev.eventsourcing.domain.ports.persistence.SagaPersistencePort;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.CommandBusinessContext;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmap;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapItem;
-import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaRoudmapItemRequest;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatus;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.ProcessCommandStatusEnum;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowItemRequest;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflow;
+import com.prado.tools.toolkitdev.eventsourcing.domain.vo.SagaWorkflowItem;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/saga")
+@CrossOrigin(origins = "*")
 public class SagaController {
 
     private SagaPersistencePort sagaPersistencePort;
@@ -27,29 +30,35 @@ public class SagaController {
         this.sagaPersistencePort = sagaPersistencePort;
     }
 
-    @PostMapping("/command/business-context")
-    public ResponseEntity<CommandBusinessContext> createCommandBusinessContext(@RequestBody CommandBusinessContextRequest roudmapRequest){
-        return ResponseEntity.ok(sagaPersistencePort.createCommandBusinessContext(roudmapRequest));
+
+    @PostMapping("/workflow")
+    public ResponseEntity<SagaWorkflow> createWorkflow(@RequestBody SagaWorkflowRequest sagaRoudmap){
+        return ResponseEntity.ok(sagaPersistencePort.createSagaWorkflow(sagaRoudmap.toVo()));
     }
 
-    @PostMapping("/roudmap")
-    public ResponseEntity<SagaRoudmap> createRoudmap(@RequestBody SagaRoudmapRequest sagaRoudmap){
-        return ResponseEntity.ok(sagaPersistencePort.createSagaRoudmap(sagaRoudmap.toVo()));
-    }
-
-    @GetMapping("/roudmap")
-    public ResponseEntity<List<SagaRoudmap>> getRoudmapItens(){
+    @GetMapping("/workflow")
+    public ResponseEntity<List<SagaWorkflow>> getWorkflowItems(){
         return ResponseEntity.ok(sagaPersistencePort.allSagas());
     }
 
-    @PostMapping("/roudmap/item/{id}")
-    public ResponseEntity<SagaRoudmapItem> createSagaCicleItem(@PathVariable("id") Long idRoudmap,  @RequestBody SagaRoudmapItemRequest sagaItem){
-        final SagaRoudmapItemRequest sagaItemRequest = SagaRoudmapItemRequest.builder()
+    @PostMapping("/workflow/item/{id}")
+    public ResponseEntity<SagaWorkflowItem> createWorkflowItem(@PathVariable("id") Long idRoudmap, @RequestBody SagaWorkflowItemRequest sagaItem){
+        final SagaWorkflowItemRequest sagaItemRequest = SagaWorkflowItemRequest.builder()
                 .sagaRoudmapId(idRoudmap)
                 .stepOrder(sagaItem.getStepOrder())
                 .stepName(sagaItem.getStepName())
                 .finalizer(sagaItem.getFinalizer())
                 .build();
-        return ResponseEntity.ok(sagaPersistencePort.createSagaRoudmapItem(sagaItemRequest.toVo()));
+        return ResponseEntity.ok(sagaPersistencePort.createSagaWorkflowItem(sagaItemRequest.toVo()));
+    }
+
+    @PostMapping("/workflow/process/status")
+    public ResponseEntity<ProcessCommandStatus> getWorkflowProcessStatus(@RequestBody ProcessCommandStatusRequest processCommandStatusRequest){
+        return ResponseEntity.ok(sagaPersistencePort.createProcessStatus(processCommandStatusRequest.toVo()));
+    }
+
+    @GetMapping("/workflow/process/status")
+    public ResponseEntity<List<ProcessCommandStatus>> getWorkflowProcessStatus(){
+        return ResponseEntity.ok(sagaPersistencePort.geallSagaWorkflowStatus());
     }
 }
